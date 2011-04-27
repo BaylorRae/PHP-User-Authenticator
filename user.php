@@ -13,9 +13,13 @@ class UserCrypt {
     $salt = sha1(join('', array(time(), rand())));
     
     // hash (includes the salt)
-    $hash = sha1(join('', array($password, $salt)));
+    $hash = self::encrypt_password($password, $salt);
     
     return array('salt' => $salt, 'hash' => $hash);
+  }
+  
+  public static function encrypt_password($password, $salt) {
+    return sha1(join('', array($password, $salt)));
   }
   
 }
@@ -23,8 +27,7 @@ class UserCrypt {
 // Handles all user managing
 class User {
   
-  public $username;
-  protected $password_data;
+  protected $user_data = array();
   
   function __construct(array $info = null) {
     if( !empty($info['username']) && !empty($info['password']) ) {
@@ -33,9 +36,27 @@ class User {
     }
   }
   
+  public function __get($name) {
+    return (empty($this->user_data[$name])) ? null : $this->user_data[$name];
+  }
+  
+  public function __set($name, $value) {
+    $this->user_data[$name] = $value;
+  }
+  
+  public static function instance() {
+    static $instance = null;
+    if( $instance === null )
+      $instance = new User;
+    
+    return $instance;
+  }
+  
   public function set_password($password) {
     // user salt, user password hash
-    $this->password_data = UserCrypt::prepare_password($password);
+    $data = UserCrypt::prepare_password($password);
+    $this->password_hash = $data['hash'];
+    $this->password_salt = $data['salt'];
   }
   
   public function save() {
@@ -44,8 +65,41 @@ class User {
     // Insert the row
     $mysql->insert('users', array(
       'username' => $this->username,
-      'password_hash' => $this->password_data['hash'],
-      'password_salt' => $this->password_data['salt']
+      'password_hash' => $this->password_hash,
+      'password_salt' => $this->password_salt
     ));
+  }
+  
+  public static function find_by_username($username) {
+    global $mysql;
+    $return_value = false;
+    
+    $mysql->where('username', $username);
+    $result = $mysql->get('users');
+    
+    if( !empty($result[0]) ) {
+      $user = User::instance();
+      $user->user_data = (array) $result[0];
+      
+      $return_value = $user;
+    }
+    
+    return $return_value;
+  }
+  
+  public static function authenticate($username, $password) {
+    $return_value = false;
+    
+    if( ($user = User::find_by_username($username)) && // check if the username is found in the database
+      
+        // Make sure the user password matches the password_hash
+        ($user->password_hash == UserCrypt::encrypt_password($password, $user->password_salt))
+      ) {
+      
+      $return_value = $user;
+            
+    }
+    
+    return $return_value;
   }
 }
