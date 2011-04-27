@@ -1,0 +1,1 @@
+I copied Ryan Bate's concepts on creating a password salt and hash. You can find the code in his [Nifty Generators](https://github.com/ryanb/nifty-generators) for rails.
