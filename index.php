@@ -1,8 +1,8 @@
 <?php
-require 'mysql-wrapper.php';
+require 'MysqlDB.php';
 require 'user.php';
 
-$mysql = new MysqlWrapper('localhost', 'root', 'root', 'demo');
+MysqlDB::connect('localhost', 'root', 'root', 'demo');
 
 // Create a new user
 // $user = new User;
