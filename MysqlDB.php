@@ -1,6 +1,9 @@
 <?php
 
-class MysqlWrapper {
+class MysqlDB {
+  // Instance of the class
+  protected static $__instance = null;
+  
   private $mysql;
   private $current_table;
   private $type;
@@ -10,8 +13,26 @@ class MysqlWrapper {
   private $paramTypeList;
   private $insertData;
   
-  function __construct($host, $user, $pass, $name) {
+  private function __construct($host, $user, $pass, $name) {
     $this->mysql = new mysqli($host, $user, $pass, $name);
+  }
+  
+  public static function connect($host, $user, $pass, $name) {
+    if( self::$__instance === null ) {
+      // Initialize a new mysql connection
+      $c = __CLASS__;
+      self::$__instance = new $c($host, $user, $pass, $name);
+      
+      return self::$__instance;
+    }
+  }
+  
+  public static function instance() {
+    // The user needs to run MysqlWrapper::connect();
+    if( self::$__instance === null )
+      trigger_error('Please connect to a database using <code>' . __CLASS__ . '::connect($host, $user, $pass, $name);</code>', E_USER_ERROR);
+    
+    return self::$__instance;
   }
   
   protected function reset() {
