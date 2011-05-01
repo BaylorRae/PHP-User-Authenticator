@@ -12,6 +12,7 @@ class MysqlDB {
   private $where = array();
   private $paramTypeList;
   private $insertData;
+  public  $last_row = null;
   
   private function __construct($host, $user, $pass, $name) {
     $this->mysql = new mysqli($host, $user, $pass, $name);
@@ -70,9 +71,13 @@ class MysqlDB {
     
     $stmt = $this->buildQuery();
     $stmt->execute();
-    
+                    
     if( $stmt->affected_rows ) {
       $this->reset();
+      
+      $this->where('id', $stmt->insert_id);
+      $this->last_row = $this->get($table);
+      
       return true;
     }
   }

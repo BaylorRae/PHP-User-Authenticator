@@ -30,8 +30,16 @@ class User {
   protected $user_data = array();
   
   function __construct(array $info = null) {
-    if( !empty($info['username']) && !empty($info['password']) ) {
-      $this->username = $info['username'];
+    if( !empty($info['first_name']) &&
+        !empty($info['last_name']) &&
+        !empty($info['email_address']) &&
+        !empty($info['username']) &&
+        !empty($info['password']) ) {
+      
+      $this->first_name     =   stripslashes($info['first_name']);
+      $this->last_name      =   stripslashes($info['last_name']);
+      $this->email_address  =   stripslashes($info['email_address']);
+      $this->username       =   stripslashes($info['username']);
       $this->set_password($info['password']);
     }
   }
@@ -60,18 +68,22 @@ class User {
   }
   
   public function save() {
-    global $mysql;
-    
+    $return_value = false;
+    $mysql = MysqlDB::instance();
+        
     // Insert the row
-    $mysql->insert('users', array(
-      'username' => $this->username,
-      'password_hash' => $this->password_hash,
-      'password_salt' => $this->password_salt
-    ));
+    $mysql->insert('users', $this->user_data);
+    
+    if( $row = $mysql->last_row ) {
+      $this->user_data = (array) $row[0];
+      $return_value = true;
+    }
+    
+    return $return_value;
   }
   
   public static function find_by_username($username) {
-    global $mysql;
+    $mysql = MysqlDB::instance();
     $return_value = false;
     
     $mysql->where('username', $username);
