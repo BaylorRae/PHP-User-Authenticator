@@ -4,6 +4,22 @@ session_start();
 require 'libs/MysqlDB.php';
 require 'libs/user.php';
 
+class UserValidator {
+  
+  public static $uniqueness_of = array('username', 'email_address');
+  public static $presence_of = array('username', 'email_address', 'password');
+  public static $is_email = 'email_address';
+  
+  public static function validate($type, $field, $value) {
+    if( $type == 'is_email' ) {
+      $validation = filter_var($value, FILTER_VALIDATE_EMAIL);
+      
+      if( !$validation )
+        User::add_error($type, $field);
+    }
+  }
+}
+
 MysqlDB::connect('localhost', 'root', 'root', 'demo');
 
 function current_user() {

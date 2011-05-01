@@ -28,20 +28,24 @@ class UserCrypt {
 class User {
   
   protected $user_data = array();
+  public static $valdiator_class = 'UserValidator';
+  public static $errors = array();
   
   function __construct(array $info = null) {
-    if( !empty($info['first_name']) &&
-        !empty($info['last_name']) &&
-        !empty($info['email_address']) &&
-        !empty($info['username']) &&
-        !empty($info['password']) ) {
-      
-      $this->first_name     =   stripslashes($info['first_name']);
-      $this->last_name      =   stripslashes($info['last_name']);
-      $this->email_address  =   stripslashes($info['email_address']);
-      $this->username       =   stripslashes($info['username']);
-      $this->set_password($info['password']);
-    }
+    // if( !empty($info['first_name']) &&
+    //     !empty($info['last_name']) &&
+    //     !empty($info['email_address']) &&
+    //     !empty($info['username']) &&
+    //     !empty($info['password']) ) {
+    //   
+    //   $this->first_name     =   stripslashes($info['first_name']);
+    //   $this->last_name      =   stripslashes($info['last_name']);
+    //   $this->email_address  =   stripslashes($info['email_address']);
+    //   $this->username       =   stripslashes($info['username']);
+    //   $this->set_password($info['password']);
+    // }
+    if( !empty($info) )
+      $this->user_data = $info;
   }
   
   public function __get($name) {
@@ -69,9 +73,25 @@ class User {
   
   public function save() {
     $return_value = false;
-    $mysql = MysqlDB::instance();
+    
+    // Check if the validator class exists
+    if( class_exists(User::$valdiator_class) ) {
+      $self = $this;
+      $class = User::$valdiator_class;
+      $validators = get_class_vars($class);
+      
+      array_walk($validators, function($fields, $type) use($self) {
+        $self->validate($type, $fields);
+      });
+      
+      // had some errors
+      if( count(User::$errors) )
+        return false; // stop the function
+      
+    }
         
     // Insert the row
+    $mysql = MysqlDB::instance();
     $mysql->insert('users', $this->user_data);
     
     if( $row = $mysql->last_row ) {
@@ -113,5 +133,43 @@ class User {
     }
     
     return $return_value;
+  }
+
+  public function validate($type, $fields) {
+    $fields = (!is_array($fields)) ? array($fields) : $fields;
+        
+    foreach( $fields as $field ) {
+      $field_value = $this->$field;
+      
+      switch ($type) {
+        case 'uniqueness' :
+        case 'uniqueness_of' :
+          if( !empty($field_value) ) {
+            $mysql = MysqlDB::instance();
+            $rows = $mysql->get('users');
+
+            if( count($rows) )
+              User::add_error('uniqueness_of', $field);
+          }
+        break;
+        
+        case 'presence' :
+        case 'presence_of' :
+          if( empty($field_value) )
+            User::add_error('presence_of', $field);
+        break;
+        
+        default :
+          if( is_callable(User::$valdiator_class . '::validate') ) {
+            $class = User::$valdiator_class;
+            $class::validate($type, $field, $field_value);
+          }
+        break;
+      }
+    }
+  }
+  
+  public static function add_error($type, $field) {
+    self::$errors[$type][$field] = true;
   }
 }
