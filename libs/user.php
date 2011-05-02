@@ -74,6 +74,13 @@ class User {
   public function save() {
     $return_value = false;
     
+    // only allow specific fields
+    $proper_fields = array('first_name', 'last_name', 'password', 'email_address', 'username');
+    array_walk($this->user_data, function($value, $field) use($proper_fields) {
+      if( !in_array($field, $proper_fields) )
+        die('Oh no something went wrong. Please go back and try again.');
+    });
+    
     // Check if the validator class exists
     if( class_exists(User::$valdiator_class) ) {
       $self = $this;
@@ -89,6 +96,9 @@ class User {
         return false; // stop the function
       
     }
+    
+    $this->set_password($this->password);
+    unset($this->user_data['password']);
         
     // Insert the row
     $mysql = MysqlDB::instance();
@@ -146,6 +156,7 @@ class User {
         case 'uniqueness_of' :
           if( !empty($field_value) ) {
             $mysql = MysqlDB::instance();
+            $mysql->where($field, $field_value);
             $rows = $mysql->get('users');
 
             if( count($rows) )

@@ -1,6 +1,7 @@
 <?php
 require 'functions.php';
 
+
 $user = new User($_POST['user']);
 
 if( $user->save() ) {
@@ -9,4 +10,5 @@ if( $user->save() ) {
   echo '<pre>';
   print_r(User::$errors);
   echo '</pre>';
+  require 'sign-up.php';
 }
