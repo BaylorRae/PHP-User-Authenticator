@@ -2,7 +2,7 @@
 
 <header>
   <h2>Sign Up</h2>
-  <p>Already have an account? <a href="login.html">Log in</a> here!</p>
+  <p>Already have an account? <a href="login.php">Log in</a> here!</p>
 </header>
 <form method="post" action="do-signup.php">
   <div class="field"><h3>User Info</h3></div>

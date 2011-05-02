@@ -2,9 +2,9 @@
 
 <header>
   <h2>Log In</h2>
-  <p>Don't have an account? <a href="sign-up.html">Sign up</a> here!</p>
+  <p>Don't have an account? <a href="sign-up.php">Sign up</a> here!</p>
 </header>
-<form method="post">
+<form method="post" action="do-login.php">
   <div class="field">
     <label for="username">Username</label>
     <input type="text" id="username" name="user[username]" />
