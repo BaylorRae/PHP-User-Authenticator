@@ -12,6 +12,9 @@ class MysqlDB {
   private $where = array();
   private $paramTypeList;
   private $insertData;
+  private $join = null;
+  private $fields = '*';
+  
   public  $last_row = null;
   
   private function __construct($host, $user, $pass, $name) {
@@ -50,7 +53,7 @@ class MysqlDB {
   public function get($table, $limit = 0) {
     $this->type = 'read';
     $this->setDefaults($table, $limit);
-    $this->query = "SELECT * FROM $table";
+    $this->query = "SELECT {$this->fields} FROM $table";
     
     $stmt = $this->buildQuery();
     $stmt->execute();
@@ -117,6 +120,18 @@ class MysqlDB {
     }
   }
   
+  public function left_join($table, $conditions) {
+    $this->join = " LEFT JOIN `$table` ON ($conditions)";
+  }
+  
+  public function right_join($table, $conditions) {
+    $this->join = " RIGHT JOIN `$table` ON ($conditions)";
+  }
+  
+  public function select($fields) {
+    $this->fields = $fields;
+  }
+  
   protected function buildQuery() {
     
     // Updating Row?
@@ -131,6 +146,9 @@ class MysqlDB {
     
     // Check for where filters
     if( in_array($this->type, array('read', 'update', 'delete')) && count($this->where) ) {
+      if( $this->join !== null )
+        $this->query .= $this->join;
+      
       $this->query .= " WHERE";
       
       // Store all the values found
