@@ -4,6 +4,18 @@
   <h2>Log In</h2>
   <p>Don't have an account? <a href="sign-up.php">Sign up</a> here!</p>
 </header>
+
+<?php
+
+if( !empty(User::$errors) && $errors = User::$errors ) {
+  if( User::$validiator_class && is_callable(User::$validiator_class . '::get_errors') ) {
+    $class = User::$validiator_class;
+    $class::get_errors($errors);
+  }
+}
+
+?>
+
 <form method="post" action="do-login.php">
   <div class="field">
     <label for="username">Username</label>
