@@ -48,7 +48,12 @@ class UserValidator {
 MysqlDB::connect('localhost', 'root', 'root', 'demo');
 
 function current_user() {
-  return false;
+  static $user = null;
+  
+  if( !empty($_SESSION['login_hash']) && $user === null )
+    $user = User::find_by_login_hash($_SESSION['login_hash']);
+    
+  return $user;
 }
 
 function nav() {
@@ -73,4 +78,36 @@ function nav() {
     $class = null;
   }
   
+}
+
+
+function search_params($haystack, $needle) {
+    $keys = explode('.', $needle);
+    $output = $haystack;
+    $changed = false;
+
+    foreach( $keys as $key ) {
+        if(isset($output[$key])){
+            $output = $output[$key];
+            $changed = true;
+
+            // End of array chain?
+            if( !is_array($output) )
+              break;
+
+        }else { // no matches? no results
+          $changed = false;
+          break;
+        }
+    }
+
+    return $changed ? $output : null;
+}
+
+function _post($name) {
+  return search_params($_POST, $name);
+}
+
+function _get($name) {
+  return search_params($_GET, $name);
 }

@@ -1,10 +1,5 @@
 <?php
 
-/*
-  TODO Make sure the password and username are set, before saving
-  TODO Login a user (check the database for matching records)
-*/
-
 // Handles all password encryption
 class UserCrypt {
   
@@ -32,18 +27,6 @@ class User {
   public static $errors = array();
   
   function __construct(array $info = null) {
-    // if( !empty($info['first_name']) &&
-    //     !empty($info['last_name']) &&
-    //     !empty($info['email_address']) &&
-    //     !empty($info['username']) &&
-    //     !empty($info['password']) ) {
-    //   
-    //   $this->first_name     =   stripslashes($info['first_name']);
-    //   $this->last_name      =   stripslashes($info['last_name']);
-    //   $this->email_address  =   stripslashes($info['email_address']);
-    //   $this->username       =   stripslashes($info['username']);
-    //   $this->set_password($info['password']);
-    // }
     if( !empty($info) )
       $this->user_data = $info;
   }
@@ -54,6 +37,13 @@ class User {
   
   public function __set($name, $value) {
     $this->user_data[$name] = $value;
+  }
+  
+  public static function __callStatic($func, $args) {
+    if( preg_match('/^find_by_(\w+)/', $func, $matches) ) {
+      $field = $matches[1];
+      return self::find($field, $args[0]);
+    }
   }
   
   public static function instance() {
@@ -112,11 +102,11 @@ class User {
     return $return_value;
   }
   
-  public static function find_by_username($username) {
+  private static function find($field, $value) {
     $mysql = MysqlDB::instance();
     $return_value = false;
     
-    $mysql->where('username', $username);
+    $mysql->where($field, $value);
     $result = $mysql->get('users');
     
     if( !empty($result[0]) ) {
@@ -140,6 +130,8 @@ class User {
       
       $return_value = $user;
             
+    }else {
+      self::add_error('invalid_login', 'username');
     }
     
     return $return_value;
@@ -182,5 +174,22 @@ class User {
   
   public static function add_error($type, $field) {
     self::$errors[$type][$field] = true;
+  }
+  
+  public function generate_login_hash() {
+    $login_hash = UserCrypt::prepare_password($this->password_salt);
+    $login_hash = $login_hash['salt'];
+    
+    $mysql = MysqlDB::instance();
+    $mysql->where('id', $this->id);
+    if( $mysql->update('users', array('login_hash' => $login_hash)) ) {
+      return $login_hash;
+    }else {
+      // todo: show some type of error
+    }
+  }
+  
+  public function full_name() {
+    return join(array($this->first_name, $this->last_name), ' ');
   }
 }
