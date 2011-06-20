@@ -28,7 +28,7 @@ class UserCrypt {
 class User {
   
   protected $user_data = array();
-  public static $valdiator_class = 'UserValidator';
+  public static $validiator_class = 'UserValidator';
   public static $errors = array();
   
   function __construct(array $info = null) {
@@ -82,9 +82,9 @@ class User {
     });
     
     // Check if the validator class exists
-    if( class_exists(User::$valdiator_class) ) {
+    if( class_exists(User::$validiator_class) ) {
       $self = $this;
-      $class = User::$valdiator_class;
+      $class = User::$validiator_class;
       $validators = get_class_vars($class);
       
       array_walk($validators, function($fields, $type) use($self) {
@@ -171,8 +171,8 @@ class User {
         break;
         
         default :
-          if( is_callable(User::$valdiator_class . '::validate') ) {
-            $class = User::$valdiator_class;
+          if( is_callable(User::$validiator_class . '::validate') ) {
+            $class = User::$validiator_class;
             $class::validate($type, $field, $field_value);
           }
         break;
