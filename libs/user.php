@@ -23,6 +23,7 @@ class UserCrypt {
 class User {
   
   protected $user_data = array();
+  protected $user_roles = null;
   public static $validiator_class = 'UserValidator';
   public static $errors = array();
   
@@ -191,5 +192,22 @@ class User {
   
   public function full_name() {
     return join(array($this->first_name, $this->last_name), ' ');
+  }
+
+  public function can($role_name) {
+    if( $this->user_roles === null ) {
+      $mysql = MysqlDB::instance();
+      $mysql->select('roles.name');
+      $mysql->left_join('roles', 'role_id = roles.id');
+      $mysql->where('user_id', $this->id);
+      
+      $roles = $mysql->get('user_roles');
+      
+      foreach( $roles as $role ) {
+        $this->user_roles[$role->name] = 1;
+      }
+    }
+    
+    return isset($this->user_roles[$role_name]);
   }
 }
